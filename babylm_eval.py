@@ -12,6 +12,7 @@ TASKS = {
                "subject_aux_inversion.json", "turn_taking.json"]
 }
 
+import babylm.models  # HACK: not sure how to register my models otherwise
 
 def accuracy_on_task(task_name, eval_model, template_name, num_fewshot):
     predictions_path = os.path.join(args.model_path, "zeroshot", task_title, "predictions.txt")
@@ -40,15 +41,19 @@ if __name__ == "__main__":
                         help="Trust remote code (e.g. from huggingface) when loading model.")
     parser.add_argument("--num_fewshot", "-n", type=int, default=0,
                         help="Number of few-shot examples to show the model for each test example.")
+    parser.add_argument("--no_cuda", action='store_true',
+                        help="Use the cpu instead of cuda.")
     args = parser.parse_args()
 
     MODEL_TYPE_REMAP = {"decoder only": "hf-causal", "decoder": "hf-causal",
                         "encoder only": "hf-mlm", "encoder": "hf-mlm",
                         "encoder-decoder": "hf-seq2seq",}
+
+    device = "cpu" if args.no_cuda else "cuda"
     eval_model = lm_eval.get_model(MODEL_TYPE_REMAP[args.model_type],
                                    pretrained=args.model_path,
                                    trust_remote_code=args.trust_remote_code,
-                                   device="cuda")
+                                   device=device)
     tasks = []
     if args.tasks == "all":
         for task_type in TASKS.keys():
